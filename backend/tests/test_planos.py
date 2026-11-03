@@ -1,11 +1,9 @@
-import os
 import pytest
 from httpx import AsyncClient
-from app.core.config import settings
 
 
 @pytest.mark.asyncio
-async def test_upload_blueprint_pdf_saves_file_and_returns_static_url(client: AsyncClient):
+async def test_upload_blueprint_pdf_stores_it_and_serves_it_back(client: AsyncClient):
     pdf_bytes = b"%PDF-1.4\n%test\n"
     res = await client.post(
         "/api/v1/planos/upload",
@@ -15,14 +13,18 @@ async def test_upload_blueprint_pdf_saves_file_and_returns_static_url(client: As
     assert res.status_code == 200
     body = res.json()
     assert body["fileName"] == "test_mall____nivel_1.pdf"
-    assert body["url"].endswith("/static/blueprints/test_mall____nivel_1.pdf")
+    assert body["path"] == f"/planos/archivos/{body['id']}"
 
-    saved = os.path.join(settings.BLUEPRINTS_DIR, body["fileName"])
-    try:
-        with open(saved, "rb") as fh:
-            assert fh.read() == pdf_bytes
-    finally:
-        os.remove(saved)
+    res = await client.get(f"/api/v1{body['path']}")
+    assert res.status_code == 200
+    assert res.headers["content-type"] == "application/pdf"
+    assert res.content == pdf_bytes
+
+
+@pytest.mark.asyncio
+async def test_get_missing_blueprint_returns_404(client: AsyncClient):
+    res = await client.get("/api/v1/planos/archivos/no-existe")
+    assert res.status_code == 404
 
 
 @pytest.mark.asyncio

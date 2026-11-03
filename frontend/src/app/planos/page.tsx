@@ -14,6 +14,7 @@ import {
   fetchLocalById,
   FALLBACK_MALLS,
   FALLBACK_LOCALES,
+  DEFAULT_PLANO_PATH,
 } from '../../lib/api';
 import {
   Building2,
@@ -78,8 +79,8 @@ function PlanosContent() {
 
   // Default known PDF blueprints
   const MALLS_WITH_PLANO: Record<string, string> = {
-    'plaza-center-villa-el-salvador': '/blueprints/pacita_ves_nivel1.pdf',
-    '8341cdb0-19c2-4c01-8938-cf59fdfe7aa1': '/blueprints/pacita_ves_nivel1.pdf',
+    'plaza-center-villa-el-salvador': DEFAULT_PLANO_PATH,
+    '8341cdb0-19c2-4c01-8938-cf59fdfe7aa1': DEFAULT_PLANO_PATH,
   };
 
   // 1. Load malls and set active mall based on query param

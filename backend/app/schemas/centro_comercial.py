@@ -20,6 +20,7 @@ class CentroComercialBase(BaseModel):
     total_locales: int = 0
     superficie_total_m2: float = 0.0
     imagen_url: Optional[str] = None
+    plano_url: Optional[str] = None
 
     @field_validator("lat")
     @classmethod
@@ -56,6 +57,7 @@ class CentroComercialUpdate(BaseModel):
     total_locales: Optional[int] = None
     superficie_total_m2: Optional[float] = None
     imagen_url: Optional[str] = None
+    plano_url: Optional[str] = None
 
     @field_validator("lat")
     @classmethod

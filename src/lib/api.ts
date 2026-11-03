@@ -584,28 +584,50 @@ export async function deletePolygonApi(
   }
 }
 
-// Upload blueprint PDF. The FastAPI backend stores it (works with the static
-// export used in production); the local Next route is only a dev fallback.
-// Returns null when neither is reachable so callers can fall back to a blob URL.
+// Upload blueprint PDF. The backend stores it in the database and returns its
+// API-relative path ("/planos/archivos/<id>"), which only signed-in users can open.
+// Returns null when the backend is unreachable so callers can fall back to a blob URL.
 export async function uploadBlueprintPdf(file: File, slug?: string): Promise<string | null> {
-  const buildForm = () => {
-    const formData = new FormData();
-    formData.append('file', file);
-    if (slug) formData.append('slug', slug);
-    return formData;
-  };
-  const endpoints = [`${API_BASE_URL}/planos/upload`, '/api/upload-blueprint'];
-  for (const url of endpoints) {
-    try {
-      const res = await fetchWithTimeout(url, { method: 'POST', body: buildForm() }, 20000);
-      if (!res.ok) continue;
-      const data = await res.json();
-      if (data.url) return data.url as string;
-    } catch (err) {
-      console.warn(`Blueprint upload notice (${url}):`, err);
-    }
+  const formData = new FormData();
+  formData.append('file', file);
+  if (slug) formData.append('slug', slug);
+  try {
+    // Generous timeout: the free backend may be waking up
+    const res = await fetchWithTimeout(
+      `${API_BASE_URL}/planos/upload`,
+      { method: 'POST', body: formData },
+      90000
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    return (data.path as string) || null;
+  } catch (err) {
+    console.warn('Blueprint upload notice:', err);
+    return null;
   }
-  return null;
+}
+
+// Default blueprint shipped with the seed data (stored in the backend database)
+export const DEFAULT_PLANO_PATH = '/planos/archivos/pacita-ves-nivel1';
+
+// Maps a stored blueprint reference to a loadable URL. API paths get the backend
+// base URL; old public paths (before PDFs required a session) map to the API copy.
+export function resolvePdfUrl(url: string): string {
+  if (url.startsWith('/planos/archivos/')) return `${API_BASE_URL}${url}`;
+  if (/^\/(static\/)?blueprints\/pacita_ves_nivel1\.pdf$/.test(url)) {
+    return `${API_BASE_URL}${DEFAULT_PLANO_PATH}`;
+  }
+  return url;
+}
+
+// react-pdf source: API PDFs need the session token; blob/data URLs load as-is.
+export function pdfSource(url: string): string | { url: string; httpHeaders: Record<string, string> } {
+  const resolved = resolvePdfUrl(url);
+  const token = getToken();
+  if (token && resolved.startsWith(API_BASE_URL)) {
+    return { url: resolved, httpHeaders: { Authorization: `Bearer ${token}` } };
+  }
+  return resolved;
 }
 
 // 8. Fetch Tickets

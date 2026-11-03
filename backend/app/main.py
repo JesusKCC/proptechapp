@@ -1,8 +1,6 @@
-import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from app.api.v1.api import api_router
 from app.core.config import settings
 from app.db.session import init_db
@@ -12,9 +10,6 @@ from app.db.session import init_db
 async def lifespan(app: FastAPI):
     # Ensure database tables exist on startup
     await init_db()
-    
-    # Ensure blueprint directory exists
-    os.makedirs(settings.BLUEPRINTS_DIR, exist_ok=True)
     yield
 
 
@@ -36,9 +31,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Static directory for architectural blueprints
-os.makedirs(settings.BLUEPRINTS_DIR, exist_ok=True)
-app.mount("/static/blueprints", StaticFiles(directory=settings.BLUEPRINTS_DIR), name="blueprints")
+# Blueprint PDFs are not a public static mount: they live in the database and are
+# served by the authenticated /api/v1/planos/archivos/{id} endpoint.
 
 # Include API v1 router
 app.include_router(api_router, prefix=settings.API_V1_STR)
@@ -49,7 +43,7 @@ def health_check():
     return {
         "status": "healthy",
         "service": settings.PROJECT_NAME,
-        "database": "sqlite_postgis_dual_tier"
+        "database": "sqlite" if settings.is_sqlite else "postgresql"
     }
 
 

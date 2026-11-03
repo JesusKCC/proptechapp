@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
+import { DEFAULT_PLANO_PATH, pdfSource } from '../../lib/api';
 import { PoligonoBlueprint, LocalComercial, UserRole, BlueprintInfo } from '../../types';
 import { RelativePoint } from '../../lib/coordinateMath';
 import { ZoomControls } from './ZoomControls';
@@ -144,7 +145,7 @@ const DEFAULT_AUTHENTIC_POLYGONS: PoligonoBlueprint[] = [
 ];
 
 export const PdfBlueprintViewer: React.FC<PdfBlueprintViewerProps> = ({
-  pdfUrl = '/blueprints/pacita_ves_nivel1.pdf',
+  pdfUrl = DEFAULT_PLANO_PATH,
   blueprintInfo,
   initialPolygons,
   availableLocales = [],
@@ -248,6 +249,9 @@ export const PdfBlueprintViewer: React.FC<PdfBlueprintViewerProps> = ({
     setPan({ x: initialX, y: initialY });
     setTimeout(() => setIsAnimatingButton(false), 150);
   }, [pageWidth, pageHeight]);
+
+  // Memoized so react-pdf does not reload the document on every render
+  const pdfFile = useMemo(() => pdfSource(pdfUrl), [pdfUrl]);
 
   // Reset auto-fit flag when pdfUrl changes
   useEffect(() => {
@@ -591,7 +595,7 @@ export const PdfBlueprintViewer: React.FC<PdfBlueprintViewerProps> = ({
 
             {/* PDF Renderer */}
             <Document
-              file={pdfUrl}
+              file={pdfFile}
               onLoadSuccess={onDocumentLoadSuccess}
               onLoadError={(err) => {
                 console.warn('PDF load notice:', err.message);

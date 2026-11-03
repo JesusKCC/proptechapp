@@ -22,6 +22,8 @@ class CentroComercial(Base):
     total_locales: Mapped[int] = mapped_column(Integer, default=0)
     superficie_total_m2: Mapped[float] = mapped_column(Float, default=0.0)
     imagen_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    # API path of the mall's main blueprint PDF (see ArchivoPlano)
+    plano_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # Relationships
     planos: Mapped[List["PlanoCentro"]] = relationship(

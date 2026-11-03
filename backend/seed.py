@@ -24,6 +24,7 @@ from app.models.local import Local
 from app.models.poligono import Poligono
 from app.models.ticket import Ticket
 from app.models.evento_outbox import EventoOutbox
+from app.models.archivo_plano import ArchivoPlano
 
 # Paths to assets
 WORKSPACE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -36,6 +37,10 @@ SOURCE_PDF = os.path.join(
 )
 DEST_BLUEPRINTS_DIR = os.path.join(os.path.dirname(__file__), "static", "blueprints")
 DEST_PDF = os.path.join(DEST_BLUEPRINTS_DIR, "pacita_ves_nivel1.pdf")
+
+# The default blueprint is stored in the database and served by the API
+DEFAULT_PLANO_ID = "pacita-ves-nivel1"
+DEFAULT_PLANO_URL = f"/planos/archivos/{DEFAULT_PLANO_ID}"
 
 EXCEL_PATH = os.path.join(SIBLING_ROOT, "base_datos_plazacenter.xlsx")
 JSON_PATH = os.path.join(SIBLING_ROOT, "PLANO COMERCIAL", "plano_pacita.json")
@@ -373,13 +378,39 @@ AUTHENTIC_POLYGONS_DATA = [
 ]
 
 
-def seed_database():
-    """Populates database idempotently with Peru shopping malls, units, polygons, and tickets."""
+def store_blueprint_pdf(session) -> None:
+    """Stores the default blueprint PDF in the database (served only to signed-in users)."""
+    if session.get(ArchivoPlano, DEFAULT_PLANO_ID) is not None or not os.path.exists(DEST_PDF):
+        return
+    with open(DEST_PDF, "rb") as fh:
+        content = fh.read()
+    session.add(ArchivoPlano(
+        id=DEFAULT_PLANO_ID,
+        nombre_archivo="pacita_ves_nivel1.pdf",
+        tamano_bytes=len(content),
+        contenido=content,
+    ))
+    session.commit()
+    print(f"[PLANOS] Stored default blueprint PDF ({len(content)} bytes).")
+
+
+def seed_database(force: bool = False):
+    """
+    Populates the database with Peru shopping malls, units, polygons, and tickets.
+    A database that already has malls is left untouched (it may hold real edits),
+    unless force=True, which re-applies the seed values.
+    """
     print("[INFO] Initializing database tables...")
     init_db_sync()
 
     session = SyncSessionLocal()
     try:
+        store_blueprint_pdf(session)
+
+        if not force and session.execute(select(CentroComercial.id).limit(1)).first():
+            print("[SKIP] Database already initialized; existing data kept (use --force to re-seed).")
+            return
+
         # 1. Shopping Centers (11 Authentic Peruvian Malls)
         mall_objects: Dict[str, CentroComercial] = {}
         for m_data in AUTHENTIC_MALLS_DATA:
@@ -402,13 +433,15 @@ def seed_database():
 
         # 2. Architectural Blueprint for Plaza Center Villa El Salvador
         ves_mall = mall_objects["plaza-center-villa-el-salvador"]
+        if not ves_mall.plano_url:
+            ves_mall.plano_url = DEFAULT_PLANO_URL
         existing_plano = session.execute(
             select(PlanoCentro).where(PlanoCentro.centro_comercial_id == ves_mall.id)
         ).scalar_one_or_none()
 
         if existing_plano:
             existing_plano.nombre_piso = "Nivel 1 - Galería Principal"
-            existing_plano.archivo_pdf_url = "/static/blueprints/pacita_ves_nivel1.pdf"
+            existing_plano.archivo_pdf_url = DEFAULT_PLANO_URL
             existing_plano.ancho_unscaled_pt = 2384.0
             existing_plano.alto_unscaled_pt = 1684.0
             plano = existing_plano
@@ -416,7 +449,7 @@ def seed_database():
             plano = PlanoCentro(
                 centro_comercial_id=ves_mall.id,
                 nombre_piso="Nivel 1 - Galería Principal",
-                archivo_pdf_url="/static/blueprints/pacita_ves_nivel1.pdf",
+                archivo_pdf_url=DEFAULT_PLANO_URL,
                 ancho_unscaled_pt=2384.0,
                 alto_unscaled_pt=1684.0
             )
@@ -652,4 +685,4 @@ def seed_database():
 
 if __name__ == "__main__":
     copy_blueprint_asset()
-    seed_database()
+    seed_database(force="--force" in sys.argv)
