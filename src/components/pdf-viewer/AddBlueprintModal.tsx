@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import { Layers, X } from '../common/Icons';
+import { uploadBlueprintPdf } from '../../lib/api';
 
 interface AddBlueprintModalProps {
   isOpen: boolean;
@@ -52,29 +53,10 @@ export const AddBlueprintModal: React.FC<AddBlueprintModalProps> = ({
     setErrorMsg('');
 
     try {
-      const formData = new FormData();
-      formData.append('file', planFile);
       const cleanFloorSlug = nombrePiso.toLowerCase().replace(/[^a-z0-9]/g, '_');
-      let pdfUrl = '';
-
-      try {
-        const res = await fetch('/api/upload-blueprint', {
-          method: 'POST',
-          body: formData,
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.url) {
-            pdfUrl = data.url;
-          }
-        }
-      } catch (uploadErr) {
-        console.warn('Backend upload notice, using client blob:', uploadErr);
-      }
-
-      if (!pdfUrl) {
-        pdfUrl = URL.createObjectURL(planFile);
-      }
+      const pdfUrl =
+        (await uploadBlueprintPdf(planFile, `${mallSlug}_${cleanFloorSlug}`)) ||
+        URL.createObjectURL(planFile);
 
       const newEntry = {
         id: `plano-${mallSlug}-${cleanFloorSlug}-${Date.now()}`,

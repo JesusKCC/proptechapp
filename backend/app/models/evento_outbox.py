@@ -1,9 +1,13 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 from sqlalchemy import DateTime, JSON, String
 from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import Base
+
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 class EventoOutbox(Base):
@@ -19,5 +23,5 @@ class EventoOutbox(Base):
     estado: Mapped[str] = mapped_column(
         String(20), nullable=False, default="pendiente", index=True
     )  # pendiente, publicado, fallido
-    creado_en: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    creado_en: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
     procesado_en: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)

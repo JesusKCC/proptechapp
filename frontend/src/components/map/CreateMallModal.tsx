@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import { CentroComercial } from '../../types';
+import { uploadBlueprintPdf } from '../../lib/api';
 import { X, Building2, MapPin, Plus, Layers } from '../common/Icons';
 
 interface CreateMallModalProps {
@@ -90,25 +91,10 @@ export const CreateMallModal: React.FC<CreateMallModalProps> = ({ isOpen, onClos
 
       // Upload blueprint PDF if attached
       if (planFile) {
-        try {
-          const uploadData = new FormData();
-          uploadData.append('file', planFile);
-          uploadData.append('slug', slug);
-
-          const uploadRes = await fetch('/api/upload-blueprint', {
-            method: 'POST',
-            body: uploadData,
-          });
-
-          if (uploadRes.ok) {
-            const uploadJson = await uploadRes.json();
-            if (uploadJson.url) {
-              uploadedPlanoUrl = uploadJson.url;
-              setUploadSuccess(true);
-            }
-          }
-        } catch (uploadErr) {
-          console.warn('Blueprint upload notice:', uploadErr);
+        const url = await uploadBlueprintPdf(planFile, slug);
+        if (url) {
+          uploadedPlanoUrl = url;
+          setUploadSuccess(true);
         }
       }
 

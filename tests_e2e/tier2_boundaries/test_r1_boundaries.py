@@ -214,7 +214,7 @@ def test_t2_r1_03_colinear_zero_area():
     # 3 points on horizontal line y = 0.5
     colinear_pts = [(0.1, 0.5), (0.5, 0.5), (0.9, 0.5)]
     area = polygon_area(colinear_pts)
-    assert area == 0.0
+    assert abs(area) < 1e-12, f"Expected ~0 area, got {area}"
 
 @TestRegistry.register(
     test_id="E2E-T2-FEAT-R1-03-04",

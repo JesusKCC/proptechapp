@@ -6,17 +6,24 @@ services:
     plan: free
     buildCommand: cd backend && pip install -r requirements.txt && python seed.py
     startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
+      - key: SECRET_KEY
+        generateValue: true
+      - key: WEBHOOK_HMAC_SECRET
+        generateValue: true
 
+  # next.config.mjs uses output: 'export', so the frontend is a static site
+  # (`next start` does not work with static export).
   - type: web
     name: proptech-web
-    runtime: node
-    region: oregon
-    plan: free
+    runtime: static
     buildCommand: npm install && npm run build
-    startCommand: npm start
+    staticPublishPath: ./out
     envVars:
       - key: NODE_VERSION
-        value: 20.0.0
+        value: 20.18.0
+      - key: NEXT_PUBLIC_API_URL
+        value: https://proptech-api.onrender.com/api/v1

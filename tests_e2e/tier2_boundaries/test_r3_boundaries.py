@@ -1,5 +1,6 @@
 # Tier 2 Boundary & Corner Cases: Frontend Modules (FEAT-R3-01 to FEAT-R3-05)
 # Authoritative Sources: ORIGINAL_REQUEST.md § R3, PROJECT.md § 13 to 17
+import math
 from tests_e2e.core.runner import TestRegistry
 from tests_e2e.core.contracts import (
     AUTHENTIC_PERU_MALLS, is_within_peru, check_rbac_permission,

@@ -1,9 +1,13 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from sqlalchemy import DateTime, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
+
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 class Ticket(Base):
@@ -32,9 +36,9 @@ class Ticket(Base):
     asignado_a: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     notas_resolucion: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     resuelto_en: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
-    creado_en: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    creado_en: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
     actualizado_en: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime, default=_utcnow, onupdate=_utcnow
     )
 
     # Relationships

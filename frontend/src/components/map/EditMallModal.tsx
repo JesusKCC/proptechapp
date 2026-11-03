@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { CentroComercial } from '../../types';
+import { uploadBlueprintPdf } from '../../lib/api';
 import { X, Edit3, Layers, MapPin } from '../common/Icons';
 
 interface EditMallModalProps {
@@ -107,25 +108,10 @@ export const EditMallModal: React.FC<EditMallModalProps> = ({ isOpen, mall, onCl
 
       // If a new PDF was selected, upload and store it
       if (planFile) {
-        try {
-          const uploadData = new FormData();
-          uploadData.append('file', planFile);
-          uploadData.append('slug', mall.slug);
-
-          const uploadRes = await fetch('/api/upload-blueprint', {
-            method: 'POST',
-            body: uploadData,
-          });
-
-          if (uploadRes.ok) {
-            const uploadJson = await uploadRes.json();
-            if (uploadJson.url) {
-              uploadedPlanoUrl = uploadJson.url;
-              setUploadSuccess(true);
-            }
-          }
-        } catch (uploadErr) {
-          console.warn('Local blueprint upload notice:', uploadErr);
+        const url = await uploadBlueprintPdf(planFile, mall.slug);
+        if (url) {
+          uploadedPlanoUrl = url;
+          setUploadSuccess(true);
         }
       }
 

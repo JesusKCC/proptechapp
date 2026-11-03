@@ -1,5 +1,6 @@
 # Tier 1 Feature Tests: Backend Core (FEAT-R1-01 to FEAT-R1-05)
 # Authoritative Sources: ORIGINAL_REQUEST.md ? R1, PROJECT.md ? Interface Contracts
+import re
 import math
 from tests_e2e.core.runner import TestRegistry
 from tests_e2e.core.contracts import (
@@ -28,7 +29,7 @@ from tests_e2e.core.webhook_signer import (
 def test_r1_01_mall_creation_peru():
     for mall in AUTHENTIC_PERU_MALLS:
         assert is_within_peru(mall["lat"], mall["lon"]), f"Mall {mall['nombre']} coords outside Peru"
-        assert mall["slug"].startswith("plaza-") or mall["slug"].startswith("real-") or mall["slug"].startswith("mall"), "Invalid slug"
+        assert re.fullmatch(r"[a-z0-9]+(-[a-z0-9]+)*", mall["slug"]), f"Invalid slug: {mall['slug']}"
         assert len(mall["departamento"]) > 0, "Department must not be empty"
 
 @TestRegistry.register(

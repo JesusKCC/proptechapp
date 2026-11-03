@@ -572,6 +572,30 @@ export async function deletePolygonApi(
   }
 }
 
+// Upload blueprint PDF. The FastAPI backend stores it (works with the static
+// export used in production); the local Next route is only a dev fallback.
+// Returns null when neither is reachable so callers can fall back to a blob URL.
+export async function uploadBlueprintPdf(file: File, slug?: string): Promise<string | null> {
+  const buildForm = () => {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (slug) formData.append('slug', slug);
+    return formData;
+  };
+  const endpoints = [`${API_BASE_URL}/planos/upload`, '/api/upload-blueprint'];
+  for (const url of endpoints) {
+    try {
+      const res = await fetchWithTimeout(url, { method: 'POST', body: buildForm() }, 20000);
+      if (!res.ok) continue;
+      const data = await res.json();
+      if (data.url) return data.url as string;
+    } catch (err) {
+      console.warn(`Blueprint upload notice (${url}):`, err);
+    }
+  }
+  return null;
+}
+
 // 8. Fetch Tickets
 export async function fetchTickets(
   centroComercialId?: string,

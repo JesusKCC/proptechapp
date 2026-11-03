@@ -14,14 +14,16 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite+aiosqlite:///./proptech.db"
     SYNC_DATABASE_URL: str = "sqlite:///./proptech.db"
     
-    # CORS
+    # CORS: explicit origins (override with a JSON list in the env var) plus a
+    # regex covering Vercel / Render preview and production domains.
+    # A bare "*" is not allowed because the middleware sends credentials.
     BACKEND_CORS_ORIGINS: List[str] = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "http://localhost:8000",
         "http://127.0.0.1:8000",
-        "*"
     ]
+    BACKEND_CORS_ORIGIN_REGEX: str = r"https://[a-z0-9-]+\.(vercel\.app|onrender\.com)"
     
     # Blueprints directory
     BLUEPRINTS_DIR: str = os.path.abspath(
