@@ -15,15 +15,4 @@ services:
       - key: WEBHOOK_HMAC_SECRET
         generateValue: true
 
-  # next.config.mjs uses output: 'export', so the frontend is a static site
-  # (`next start` does not work with static export).
-  - type: web
-    name: proptech-web
-    runtime: static
-    buildCommand: npm install && npm run build
-    staticPublishPath: ./out
-    envVars:
-      - key: NODE_VERSION
-        value: 20.18.0
-      - key: NEXT_PUBLIC_API_URL
-        value: https://proptech-api.onrender.com/api/v1
+  # The frontend is a static Next.js export hosted on Vercel (see vercel.json).
