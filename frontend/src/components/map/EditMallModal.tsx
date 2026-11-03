@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { CentroComercial } from '../../types';
-import { uploadBlueprintPdf } from '../../lib/api';
+import { API_BASE_URL, fetchWithTimeout, uploadBlueprintPdf } from '../../lib/api';
 import { X, Edit3, Layers, MapPin } from '../common/Icons';
 
 interface EditMallModalProps {
@@ -131,11 +131,11 @@ export const EditMallModal: React.FC<EditMallModalProps> = ({ isOpen, mall, onCl
 
       // Try API update
       try {
-        const res = await fetch(`http://localhost:8000/api/v1/centros-comerciales/${mall.id}`, {
+        const res = await fetchWithTimeout(`${API_BASE_URL}/centros-comerciales/${mall.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json', 'X-User-Role': 'proyectos' },
           body: JSON.stringify(payload),
-        });
+        }, 15000);
         if (res.ok) {
           const updated = await res.json();
           onUpdated({ ...mall, ...updated, plano_url: uploadedPlanoUrl });

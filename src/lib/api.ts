@@ -8,21 +8,33 @@ import {
   UserRole,
 } from '../types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+import { getToken, notifySessionExpired } from './auth';
 
-// Resilient fetch with timeout to guarantee the frontend never hangs if backend is slow
-async function fetchWithTimeout(
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+
+// Resilient fetch with timeout to guarantee the frontend never hangs if backend is slow.
+// Attaches the session token and signs the user out when the API rejects it.
+export async function fetchWithTimeout(
   url: string,
   options: RequestInit = {},
   timeoutMs: number = 2500
 ): Promise<Response> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const headers = new Headers(options.headers);
+  const token = getToken();
+  if (token && url.startsWith(API_BASE_URL)) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
   try {
     const response = await fetch(url, {
       ...options,
+      headers,
       signal: controller.signal,
     });
+    if (response.status === 401 && url.startsWith(API_BASE_URL)) {
+      notifySessionExpired();
+    }
     return response;
   } finally {
     clearTimeout(timeoutId);

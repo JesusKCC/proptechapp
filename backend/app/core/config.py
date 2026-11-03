@@ -9,6 +9,11 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     SECRET_KEY: str = "proptech-super-secret-key-change-in-production-2026"
     WEBHOOK_HMAC_SECRET: str = "proptech-webhook-hmac-secret-2026"
+
+    # Login users: "usuario:contraseña:rol;otro:clave:rol" (rol = comercial|proyectos|admin).
+    # Empty means nobody can sign in; set it as a secret env var in Render.
+    AUTH_USERS: str = ""
+    ACCESS_TOKEN_EXPIRE_HOURS: int = 12
     
     # Dual database support: PostgreSQL/PostGIS in production/Docker, SQLite fallback on local Windows
     DATABASE_URL: str = "sqlite+aiosqlite:///./proptech.db"

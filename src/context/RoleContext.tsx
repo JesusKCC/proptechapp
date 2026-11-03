@@ -10,28 +10,37 @@ interface RoleContextType {
   isComercial: boolean;
   isProyectos: boolean;
   roleHeaders: Record<string, string>;
+  canSwitchRole: boolean;
 }
 
 const RoleContext = createContext<RoleContextType | undefined>(undefined);
 
 const ROLE_STORAGE_KEY = 'proptech_user_role';
 
-export const RoleProvider: React.FC<{ children: React.ReactNode; initialRole?: UserRole }> = ({
+export const RoleProvider: React.FC<{
+  children: React.ReactNode;
+  initialRole?: UserRole;
+  // Set for non-admin users: the role comes from their account and cannot change
+  lockedRole?: UserRole;
+}> = ({
   children,
   initialRole = 'proyectos',
+  lockedRole,
 }) => {
-  const [role, setRoleState] = useState<UserRole>(initialRole);
+  const [role, setRoleState] = useState<UserRole>(lockedRole ?? initialRole);
 
   useEffect(() => {
+    if (lockedRole) return;
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem(ROLE_STORAGE_KEY) as UserRole | null;
       if (stored === 'comercial' || stored === 'proyectos') {
         setRoleState(stored);
       }
     }
-  }, []);
+  }, [lockedRole]);
 
   const setRole = (newRole: UserRole) => {
+    if (lockedRole) return;
     setRoleState(newRole);
     if (typeof window !== 'undefined') {
       localStorage.setItem(ROLE_STORAGE_KEY, newRole);
@@ -55,6 +64,7 @@ export const RoleProvider: React.FC<{ children: React.ReactNode; initialRole?: U
         isComercial,
         isProyectos,
         roleHeaders,
+        canSwitchRole: !lockedRole,
       }}
     >
       {children}

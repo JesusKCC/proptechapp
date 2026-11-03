@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import { CentroComercial } from '../../types';
-import { uploadBlueprintPdf } from '../../lib/api';
+import { API_BASE_URL, fetchWithTimeout, uploadBlueprintPdf } from '../../lib/api';
 import { X, Building2, MapPin, Plus, Layers } from '../common/Icons';
 
 interface CreateMallModalProps {
@@ -115,11 +115,11 @@ export const CreateMallModal: React.FC<CreateMallModalProps> = ({ isOpen, onClos
 
       // Try API first, fall back to local creation
       try {
-        const res = await fetch('http://localhost:8000/api/v1/centros-comerciales', {
+        const res = await fetchWithTimeout(`${API_BASE_URL}/centros-comerciales/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-User-Role': 'proyectos' },
           body: JSON.stringify(payload),
-        });
+        }, 15000);
         if (res.ok) {
           const created = await res.json();
           onCreated({ ...created, plano_url: uploadedPlanoUrl });

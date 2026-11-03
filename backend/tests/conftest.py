@@ -14,6 +14,7 @@ if backend_root not in sys.path:
     sys.path.insert(0, backend_root)
 
 from app.db.base import Base
+from app.core.security import get_current_user
 from app.db.session import get_db
 from app.main import app
 from app.models.centro_comercial import CentroComercial
@@ -172,11 +173,15 @@ async def seeded_entities(db_session: AsyncSession):
 
 @pytest_asyncio.fixture(scope="function")
 async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
-    """Async HTTP test client with overridden database dependency."""
+    """
+    Async HTTP test client with overridden database dependency, signed in as an
+    admin so each test picks its role with the X-User-Role header.
+    """
     async def override_get_db():
         yield db_session
 
     app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_current_user] = lambda: {"username": "tester", "role": "admin"}
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac

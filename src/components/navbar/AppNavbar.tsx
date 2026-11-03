@@ -4,10 +4,12 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { RoleSwitcher } from './RoleSwitcher';
-import { Globe, Layers, TicketIcon, Building2 } from '../common/Icons';
+import { Globe, Layers, TicketIcon, Building2, UserCheck } from '../common/Icons';
+import { useAuth } from '../../context/AuthContext';
 
 export const AppNavbar: React.FC = () => {
   const pathname = usePathname();
+  const { session, logout } = useAuth();
 
   const navLinks = [
     { href: '/', label: 'Mapa & Portafolio', icon: Globe },
@@ -66,9 +68,22 @@ export const AppNavbar: React.FC = () => {
           </nav>
         </div>
 
-        {/* Right Section: RoleSwitcher */}
+        {/* Right Section: RoleSwitcher + session */}
         <div className="flex items-center gap-3">
           <RoleSwitcher />
+          <div className="flex items-center gap-2 border-l border-slate-200 pl-3">
+            <span className="hidden sm:flex items-center gap-1 text-xs font-semibold text-slate-600">
+              <UserCheck size={14} className="text-slate-400" />
+              {session.username}
+            </span>
+            <button
+              type="button"
+              onClick={logout}
+              className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-red-700 hover:bg-red-50 border border-slate-200 transition-colors"
+            >
+              Salir
+            </button>
+          </div>
         </div>
       </div>
 

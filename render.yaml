@@ -14,5 +14,9 @@ services:
         generateValue: true
       - key: WEBHOOK_HMAC_SECRET
         generateValue: true
+      # Login users, set in the Render dashboard (never committed):
+      # "usuario:contraseña:rol;otro:clave:rol" with rol = comercial | proyectos | admin
+      - key: AUTH_USERS
+        sync: false
 
   # The frontend is a static Next.js export hosted on Vercel (see vercel.json).

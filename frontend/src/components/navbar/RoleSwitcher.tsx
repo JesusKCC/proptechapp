@@ -5,7 +5,23 @@ import { useRole } from '../../context/RoleContext';
 import { Briefcase, Ruler, Shield } from '../common/Icons';
 
 export const RoleSwitcher: React.FC = () => {
-  const { role, setRole, isComercial, isProyectos } = useRole();
+  const { role, setRole, isComercial, isProyectos, canSwitchRole } = useRole();
+
+  if (!canSwitchRole) {
+    return (
+      <div
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border ${
+          isProyectos
+            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+            : 'bg-blue-50 text-blue-700 border-blue-200'
+        }`}
+        title="Rol asignado a su usuario"
+      >
+        {isProyectos ? <Ruler size={14} /> : <Briefcase size={14} />}
+        <span>{isProyectos ? 'Proyectos' : 'Comercial'}</span>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center gap-2">
